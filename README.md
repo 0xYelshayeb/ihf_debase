@@ -36,5 +36,5 @@ This project is designed to periodically debase the top 200 addresses of a token
 ### Usage
 
 ```bash
-node combinedScript.js
+node debase.js
 ```

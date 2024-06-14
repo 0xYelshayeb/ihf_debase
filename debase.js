@@ -64,7 +64,7 @@ const debaseAddresses = async () => {
             await tokenContract.debase(address);
             console.log(`Debase transaction successful for ${address}.`);
         } catch (error) {
-            console.error(`Error debasing ${address}`);
+            console.error(`${address} is on cooldown`);
         }
     }
 };
@@ -74,7 +74,7 @@ const debaseUser = async (user) => {
         await tokenContract.debase(user);
         console.log(`Debase transaction successful for ${user}`);
     } catch (error) {
-        console.error(`Error debasing ${user}`);
+        console.error(`${user} is on cooldown`);
     }
 };
 
