@@ -28,10 +28,12 @@ This project is designed to periodically debase the top 200 addresses of a token
    ```
 
 4. **Edit the .env file with your environment variables:**
+    ```
     PRIVATE_KEY=0xYourPrivateKeyHere
     RPC_URL=https://your-rpc-url
     CONTRACT_ADDRESS=0x3B9728bD65Ca2c11a817ce39A6e91808CceeF6FD
     VAULT_CONTRACT_ADDRESS=0x042Fef60aD51f48C65E6106F9b950178910A3300
+    ```
 
 ### Usage
 
