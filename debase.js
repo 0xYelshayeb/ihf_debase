@@ -96,3 +96,11 @@ vaultContract.on('Withdraw', (user, amount, tax) => {
 });
 
 console.log('Listening for Withdraw events...');
+
+process.on('uncaughtException', function (err) {
+    console.error('Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', function (reason, promise) {
+    console.error('Unhandled Rejection:', reason);
+});
