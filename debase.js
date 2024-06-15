@@ -1,7 +1,7 @@
 const { ethers } = require('ethers');
 require('dotenv').config();
 
-const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
+const provider = new ethers.utils.JsonRpcProvider(process.env.RPC_URL);
 const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 
 const tokenContractAddress = process.env.CONTRACT_ADDRESS;
@@ -17,6 +17,25 @@ const tokenAbi = [
         "name": "debase",
         "outputs": [],
         "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+            }
+        ],
+        "name": "balanceOf",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
         "type": "function"
     }
 ];
@@ -66,21 +85,29 @@ const getTimeStamp = () => {
 
 const debaseAddresses = async () => {
     console.log(`[${getTimeStamp()}] Debasing addresses...`);
+    let totalDebased = ethers.BigNumber.from('0');
     for (let address of addresses) {
         try {
+            const balanceBefore = await tokenContract.balanceOf(address);
             await tokenContract.debase(address);
-            console.log(`Debase transaction successful for ${address}.`);
+            const balanceAfter = await tokenContract.balanceOf(address);
+            const debasedAmount = balanceBefore.sub(balanceAfter);
+            totalDebased = totalDebased.add(debasedAmount);
+            console.log(`Debase transaction successful for ${address}. Debased: ${ethers.utils.formatUnits(debasedAmount, 18)} tokens.`);
         } catch (error) {
             console.error(`${address} is on cooldown`);
         }
     }
-    console.log('Debasing complete.');
+    console.log(`Debasing complete. Total debased: ${ethers.utils.formatUnits(totalDebased, 18)} tokens.`);
 };
 
 const debaseUser = async (user) => {
     try {
+        const balanceBefore = await tokenContract.balanceOf(user);
         await tokenContract.debase(user);
-        console.log(`Debase transaction successful for ${user}`);
+        const balanceAfter = await tokenContract.balanceOf(user);
+        const debasedAmount = balanceBefore.sub(balanceAfter);
+        console.log(`Debase transaction successful for ${user}. Debased: ${ethers.utils.formatUnits(debasedAmount, 18)} tokens.`);
     } catch (error) {
         console.error(`${user} is on cooldown`);
     }
