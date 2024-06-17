@@ -16,4 +16,4 @@ file_path = 'holders.csv'
 addresses = extract_addresses(file_path)
 
 # Print the list of addresses
-print(addresses[:100])
+print(addresses[:200])
