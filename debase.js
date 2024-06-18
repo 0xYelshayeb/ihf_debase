@@ -90,16 +90,9 @@ const slowGasPrice = ethers.utils.parseUnits('0.000025', 'gwei');
 
 const debaseAddresses = async () => {
     console.log(`[${getTimeStamp()}] Debasing addresses...`);
-    const block = await provider.getBlock("latest");
-    const baseFee = block.baseFeePerGas;
-
-    const gasPrice = baseFee.mul(110).div(100);
-
     for (let address of addresses) {
         try {
-            await tokenContract.debase(address, {
-                gasPrice: gasPrice,
-            });
+            await tokenContract.debase(address);
             console.log(`Debase transaction successful for ${address}.`);
         } catch (error) {
             console.error(`${address} is on cooldown`);
@@ -108,14 +101,8 @@ const debaseAddresses = async () => {
 };
 
 const debaseUser = async (user) => {
-    const block = await provider.getBlock("latest");
-    const baseFee = block.baseFeePerGas;
-
-    const gasPrice = baseFee.mul(110).div(100);
     try {
-        await tokenContract.debase(user, {
-            gasPrice: gasPrice,
-        });
+        await tokenContract.debase(user);
         console.log(`Debase transaction successful for ${user}.`);
     } catch (error) {
         console.error(`${user} is on cooldown`);
