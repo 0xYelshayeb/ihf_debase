@@ -102,7 +102,7 @@ const debaseAddresses = async () => {
             });
             console.log(`Debase transaction successful for ${address}.`);
         } catch (error) {
-            console.error(`${address} is on cooldown`);
+            console.error(`${address} is on cooldown at ${getTimeStamp()}`);
         }
     }
 };
@@ -118,7 +118,7 @@ const debaseUser = async (user) => {
         });
         console.log(`Debase transaction successful for ${user}.`);
     } catch (error) {
-        console.error(`${user} is on cooldown`);
+        console.error(`${user} is on cooldown at ${getTimeStamp()}`);
     }
 };
 
