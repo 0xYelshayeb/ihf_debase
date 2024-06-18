@@ -121,7 +121,7 @@ const debaseUser = async (user) => {
     }
 };
 
-setInterval(debaseAddresses, 30 * 60 * 1000);
+setInterval(debaseAddresses, 31 * 60 * 1000);
 
 debaseAddresses();
 
