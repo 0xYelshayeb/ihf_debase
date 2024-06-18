@@ -105,6 +105,7 @@ const debaseAddresses = async () => {
             console.error(`${address} is on cooldown at ${getTimeStamp()}`);
         }
     }
+    console.log(`[${getTimeStamp()}] Finished debasing addresses.`);
 };
 
 const debaseUser = async (user) => {
