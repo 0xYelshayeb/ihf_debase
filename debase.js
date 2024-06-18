@@ -86,14 +86,13 @@ const getTimeStamp = () => {
     return `${now.toISOString()}`;
 };
 
-const slowGasPrice = ethers.utils.parseUnits('0.000025', 'gwei');
-
 const debaseAddresses = async () => {
     console.log(`[${getTimeStamp()}] Debasing addresses...`);
     const block = await provider.getBlock("latest");
     const baseFee = block.baseFeePerGas;
 
     const gasPrice = baseFee.mul(110).div(100);
+    let amount = 0;
 
     for (let address of addresses) {
         try {
@@ -101,11 +100,12 @@ const debaseAddresses = async () => {
                 gasPrice: gasPrice,
             });
             console.log(`Debase transaction successful for ${address}.`);
+            amount++;
         } catch (error) {
             console.error(`${address} is on cooldown at ${getTimeStamp()}`);
         }
     }
-    console.log(`[${getTimeStamp()}] Finished debasing addresses.`);
+    console.log(`[${getTimeStamp()}] ${amount} addresses debased.`);
 };
 
 const debaseUser = async (user) => {
