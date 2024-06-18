@@ -112,7 +112,7 @@ const debaseUser = async (user) => {
     const block = await provider.getBlock("latest");
     const baseFee = block.baseFeePerGas;
 
-    const gasPrice = baseFee.mul(110).div(100);
+    const gasPrice = baseFee.mul(115).div(100);
     try {
         await tokenContract.debase(user, {
             gasPrice: gasPrice,
