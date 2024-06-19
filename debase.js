@@ -91,7 +91,7 @@ const debaseAddresses = async () => {
     const block = await provider.getBlock("latest");
     const baseFee = block.baseFeePerGas;
 
-    const gasPrice = baseFee.mul(110).div(100);
+    const gasPrice = baseFee.mul(115).div(100);
     let amount = 0;
 
     for (let address of addresses) {
