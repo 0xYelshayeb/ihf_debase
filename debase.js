@@ -104,7 +104,6 @@ const debaseAddresses = async () => {
             await tokenContract.debase(address, {
                 gasPrice: gasPrice,
             });
-            console.log(`Debase transaction successful for ${address}.`);
             amount++;
         } catch (error) {
             console.error(`${address} is on cooldown at ${getTimeStamp()}`);
