@@ -87,13 +87,21 @@ const getTimeStamp = () => {
 
 const debaseAddresses = async () => {
     console.log(`[${getTimeStamp()}] Debasing addresses...`);
-    const block = await provider.getBlock("latest");
-    const baseFee = block.baseFeePerGas;
-
-    const gasPrice = baseFee.mul(112).div(100);
+    let block = await provider.getBlock("latest");
+    let baseFee = block.baseFeePerGas;
+    let gasPrice = baseFee.mul(112).div(100);
     let amount = 0;
 
-    for (let address of addresses) {
+    for (let i = 0; i < addresses.length; i++) {
+        const address = addresses[i];
+
+        // because debase sessions take so long sometimes we need to update the gas price to avoid rejected transactions
+        if (i % 10 === 0) {
+            block = await provider.getBlock("latest");
+            baseFee = block.baseFeePerGas;
+            gasPrice = baseFee.mul(112).div(100);
+        }
+
         try {
             await tokenContract.debase(address, {
                 gasPrice: gasPrice,
@@ -103,11 +111,13 @@ const debaseAddresses = async () => {
         } catch (error) {
             console.error(`${address} is on cooldown at ${getTimeStamp()}`);
         }
-        //wait 3.5s between transactions
+        
+        // wait 3.5s between transactions
         await new Promise((resolve) => setTimeout(resolve, 3500));
     }
     console.log(`[${getTimeStamp()}] ${amount} addresses debased.`);
 };
+
 
 const debaseUser = async (user) => {
     const block = await provider.getBlock("latest");
