@@ -104,6 +104,8 @@ const debaseAddresses = async () => {
         } catch (error) {
             console.error(`${address} is on cooldown at ${getTimeStamp()}`);
         }
+        // wait 2s between transactions
+        await new Promise((resolve) => setTimeout(resolve, 2000));        
     }
     console.log(`[${getTimeStamp()}] ${amount} addresses debased.`);
 };
