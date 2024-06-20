@@ -176,7 +176,9 @@ setInterval(debaseAddresses, 31.25 * 60 * 1000);
 debaseAddresses();
 
 vaultContract.on('Withdraw', (user, amount, tax) => {
-    console.log(`[${getTimeStamp()}] Withdraw event detected. User: ${user}, Amount: ${amount}, Tax: ${tax}`);
+    const amountInEther = ethers.utils.formatEther(amount);
+    const taxInEther = ethers.utils.formatEther(tax);
+    console.log(`[${getTimeStamp()}] Withdraw event detected. User: ${user}, Amount: ${amountInEther} ETH, Tax: ${taxInEther} ETH`);
     debaseUser(user);
 });
 
