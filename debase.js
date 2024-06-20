@@ -105,7 +105,7 @@ const debaseAddresses = async () => {
         const address = addresses[i];
 
         // because debase sessions take so long sometimes we need to update the gas price to avoid rejected transactions
-        if (i % 10 === 0) {
+        if (i % 30 === 0) {
             block = await provider.getBlock("latest");
             baseFee = block.baseFeePerGas;
             gasPrice = baseFee.mul(112).div(100);
