@@ -89,6 +89,8 @@ const addresses = [
     '0xf6789053ecd92fa29dbd3dd8ee553350192035f4', '0x19e8f0f4a73babfee77450acbffe683cb6eb8825', '0x45c7509a5e9bc8c839931f56f097dbc3ce5e1a6e', '0x961da3f96b27eb356239589bb022412168133ed2', '0x8e398e3d8b6d9ff90d54f86ff98a1d271af4c0ff', '0x8f167478610984ef4a69780c6b15eec4b8d2c7f7', '0x2e7cd7b71f5f6efb78f2154f115f7cded8b70e73', '0x80ebda07a4aa13eb6de7ca95dfd923e7eeb5c41d', '0xeb1e6e1aa73b1f5c2c4448461e6f1e29c8c92966', '0xa87dccdc8f445aabc1e7e179e573302da905b1a8'
 ];
 
+const THRESHOLD = ethers.utils.parseEther('0.000005');
+
 const getTimeStamp = () => {
     const now = new Date();
     return `${now.toISOString()}`;
@@ -96,9 +98,10 @@ const getTimeStamp = () => {
 
 const debaseAddresses = async () => {
     console.log(`[${getTimeStamp()}] Debasing addresses...`);
+    let initialBalance = await getBalance();
     let block = await provider.getBlock("latest");
     let baseFee = block.baseFeePerGas;
-    let gasPrice = baseFee.mul(112).div(100);
+    let gasPrice = baseFee.mul(110).div(100);
     let amount = 0;
 
     for (let i = 0; i < addresses.length; i++) {
@@ -108,10 +111,16 @@ const debaseAddresses = async () => {
         if (i % 30 === 0) {
             block = await provider.getBlock("latest");
             baseFee = block.baseFeePerGas;
-            gasPrice = baseFee.mul(112).div(100);
+            gasPrice = baseFee.mul(110).div(100);
         }
-
         try {
+            const currentBalance = await getBalance();
+            const balanceChange = initialBalance.sub(currentBalance);
+
+            if (balanceChange.gt(THRESHOLD)) {
+                console.log(`[${getTimeStamp()}] Balance change exceeds threshold. Halting debase process.`);
+                break;
+            }
             await tokenContract.debase(address, {
                 gasPrice: gasPrice,
             });
@@ -120,18 +129,17 @@ const debaseAddresses = async () => {
         } catch (error) {
             console.error(`${address} is on cooldown at ${getTimeStamp()}`);
         }
-        
+
         // wait 3.5s between transactions
-        await new Promise((resolve) => setTimeout(resolve, 3500));
+        await new Promise((resolve) => setTimeout(resolve, 2500));
     }
     console.log(`[${getTimeStamp()}] ${amount} addresses debased.`);
 };
-
 const debaseUser = async (user) => {
     const block = await provider.getBlock("latest");
     const baseFee = block.baseFeePerGas;
 
-    const gasPrice = baseFee.mul(112).div(100);
+    const gasPrice = baseFee.mul(110).div(100);
     try {
         await tokenContract.debase(user, {
             gasPrice: gasPrice,
