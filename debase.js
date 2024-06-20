@@ -141,6 +141,7 @@ const debaseAddresses = async () => {
                     console.log(`[${getTimeStamp()}] Balance change exceeds threshold. Halting debase process.`);
                     break;
                 }
+                await new Promise(resolve => setTimeout(resolve, 500));
             }
             else {
                 // Wait 3.5s
@@ -149,7 +150,7 @@ const debaseAddresses = async () => {
             amount++;
         } catch (error) {
             console.error(`${address} is on cooldown at ${getTimeStamp()}`);
-            await new Promise(resolve => setTimeout(resolve, 2500));
+            await new Promise(resolve => setTimeout(resolve, 2000));
         }
     }
     console.log(`[${getTimeStamp()}] ${amount} addresses debased.`);
