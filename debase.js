@@ -96,15 +96,20 @@ const getTimeStamp = () => {
     return `${now.toISOString()}`;
 };
 
+const getBalance = async () => {
+    return await wallet.getBalance();
+};
+
 const debaseAddresses = async () => {
+    firstSuccessful = false;
     console.log(`[${getTimeStamp()}] Debasing addresses...`);
-    let initialBalance = await getBalance();
     let block = await provider.getBlock("latest");
     let baseFee = block.baseFeePerGas;
     let gasPrice = baseFee.mul(110).div(100);
     let amount = 0;
 
     for (let i = 0; i < addresses.length; i++) {
+        let initialBalance = 0;
         const address = addresses[i];
 
         // because debase sessions take so long sometimes we need to update the gas price to avoid rejected transactions
@@ -113,28 +118,42 @@ const debaseAddresses = async () => {
             baseFee = block.baseFeePerGas;
             gasPrice = baseFee.mul(110).div(100);
         }
-        try {
-            const currentBalance = await getBalance();
-            const balanceChange = initialBalance.sub(currentBalance);
 
-            if (balanceChange.gt(THRESHOLD)) {
-                console.log(`[${getTimeStamp()}] Balance change exceeds threshold. Halting debase process.`);
-                break;
-            }
-            await tokenContract.debase(address, {
+        if (i % 10 === 0 || !firstSuccessful) {
+            initialBalance = await getBalance();
+        }
+
+        try {
+            const tx = await tokenContract.debase(address, {
                 gasPrice: gasPrice,
             });
             console.log(`Debase transaction successful for ${address}.`);
+            // Ensure the balance change is checked for the first successful transaction
+            if (i % 10 === 0 || !firstSuccessful) {
+
+                await tx.wait();
+                firstSuccessful = true;
+                const currentBalance = await getBalance();
+                const balanceChange = initialBalance.sub(currentBalance);
+                console.log(`Balance Change: ${ethers.utils.formatEther(balanceChange)} ETH`);
+
+                if (balanceChange.gt(THRESHOLD)) {
+                    console.log(`[${getTimeStamp()}] Balance change exceeds threshold. Halting debase process.`);
+                    break;
+                }
+            }
+            else {
+                // Wait 3.5s
+                await new Promise(resolve => setTimeout(resolve, 3500));
+            }
             amount++;
         } catch (error) {
             console.error(`${address} is on cooldown at ${getTimeStamp()}`);
         }
-
-        // wait 3.5s between transactions
-        await new Promise((resolve) => setTimeout(resolve, 2500));
     }
     console.log(`[${getTimeStamp()}] ${amount} addresses debased.`);
 };
+
 const debaseUser = async (user) => {
     const block = await provider.getBlock("latest");
     const baseFee = block.baseFeePerGas;
