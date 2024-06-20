@@ -149,6 +149,7 @@ const debaseAddresses = async () => {
             amount++;
         } catch (error) {
             console.error(`${address} is on cooldown at ${getTimeStamp()}`);
+            await new Promise(resolve => setTimeout(resolve, 2500));
         }
     }
     console.log(`[${getTimeStamp()}] ${amount} addresses debased.`);
