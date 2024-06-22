@@ -85,7 +85,7 @@ const addresses = [
 
 ];
 
-const THRESHOLD = ethers.utils.parseEther('0.0000008');
+const THRESHOLD = ethers.utils.parseEther('0.000002');
 
 const getTimeStamp = () => {
     const now = new Date();
