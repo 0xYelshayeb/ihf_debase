@@ -128,7 +128,7 @@ const debaseAddresses = async () => {
 
                 await Promise.race([
                     tx.wait(),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('Operation timed out')), 10000))
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Operation timed out')), 15000))
                 ]);
                 firstSuccessful = true;
                 const currentBalance = await getBalance();
