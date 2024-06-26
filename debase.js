@@ -126,7 +126,10 @@ const debaseAddresses = async () => {
             // Ensure the balance change is checked for the first successful transaction
             if (i % 10 === 0 || !firstSuccessful) {
 
-                await tx.wait();
+                await Promise.race([
+                    tx.wait(),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Operation timed out')), 10000))
+                ]);
                 firstSuccessful = true;
                 const currentBalance = await getBalance();
                 const balanceChange = initialBalance.sub(currentBalance);
