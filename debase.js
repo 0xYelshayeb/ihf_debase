@@ -118,7 +118,7 @@ const debaseAddresses = async () => {
         if (i % 30 === 0) {
             block = await provider.getBlock("latest");
             baseFee = block.baseFeePerGas;
-            gasPrice = baseFee.mul(110).div(100);
+            gasPrice = baseFee.mul(107).div(100);
         }
 
         if (i % 10 === 0 || !firstSuccessful) {
@@ -165,7 +165,7 @@ const debaseUser = async (user) => {
     const block = await provider.getBlock("latest");
     const baseFee = block.baseFeePerGas;
 
-    const gasPrice = baseFee.mul(110).div(100);
+    const gasPrice = baseFee.mul(107).div(100);
     try {
         await tokenContract.debase(user, {
             gasPrice: gasPrice,
