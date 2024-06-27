@@ -75,7 +75,7 @@ const vaultAbi = [
 
 const vaultContract = new ethers.Contract(vaultContractAddress, vaultAbi, provider);
 
-const THRESHOLD = ethers.utils.parseEther('0.000002');
+const THRESHOLD = ethers.utils.parseEther('0.000003');
 
 const getTimeStamp = () => {
     const now = new Date();
