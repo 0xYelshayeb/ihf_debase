@@ -107,7 +107,7 @@ const fetchEthPrice = async () => {
     return data.ethereum.usd;
 };
 
-const usdThreshold = 0.5;
+const usdThreshold = 0.4;
 
 const debaseAddresses = async () => {
     const addresses = await readAddressesFromCSV('holders.csv');
@@ -156,7 +156,7 @@ const debaseAddresses = async () => {
                 console.log(`Balance Change for first transaction: ${ethers.utils.formatEther(balanceChangeInEth)} ETH`);
                 console.log(`Equivalent in USD: $${balanceChangeInUsd.toFixed(4)}`);
 
-                maxAddresses = Math.floor(usdThreshold / balanceChangeInUsd);
+                maxAddresses = Math.min(Math.floor(usdThreshold / balanceChangeInUsd), addresses.length);
                 console.log(`Max addresses to debase: ${maxAddresses}`);
                 await new Promise(resolve => setTimeout(resolve, 500));
             }
