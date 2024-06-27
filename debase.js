@@ -101,16 +101,27 @@ const readAddressesFromCSV = (filePath) => {
     });
 };
 
+const fetchEthPrice = async () => {
+    const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
+    const data = await response.json();
+    return data.ethereum.usd;
+};
+
+const usdThreshold = 0.5;
+
 const debaseAddresses = async () => {
     const addresses = await readAddressesFromCSV('holders.csv');
-    firstSuccessful = false;
+    const ethPrice = await fetchEthPrice();
     console.log(`[${getTimeStamp()}] Debasing addresses...`);
+    let balanceChangeInEth = ethers.BigNumber.from(0);
+    let firstSuccessful = false;
     let block = await provider.getBlock("latest");
     let baseFee = block.baseFeePerGas;
     let gasPrice = baseFee.mul(110).div(100);
     let amount = 0;
+    let maxAddresses = addresses.length;
 
-    for (let i = 0; i < addresses.length; i++) {
+    for (let i = 0; i < maxAddresses; i++) {
         let initialBalance = 0;
         const address = addresses[i];
 
@@ -121,7 +132,7 @@ const debaseAddresses = async () => {
             gasPrice = baseFee.mul(107).div(100);
         }
 
-        if (i % 10 === 0 || !firstSuccessful) {
+        if (!firstSuccessful) {
             initialBalance = await getBalance();
         }
 
@@ -131,7 +142,7 @@ const debaseAddresses = async () => {
             });
             console.log(`Debase transaction successful for ${address}.`);
             // Ensure the balance change is checked for the first successful transaction
-            if (i % 10 === 0 || !firstSuccessful) {
+            if (!firstSuccessful) {
 
                 await Promise.race([
                     tx.wait(),
@@ -139,13 +150,14 @@ const debaseAddresses = async () => {
                 ]);
                 firstSuccessful = true;
                 const currentBalance = await getBalance();
-                const balanceChange = initialBalance.sub(currentBalance);
-                console.log(`Balance Change: ${ethers.utils.formatEther(balanceChange)} ETH`);
+                balanceChangeInEth = initialBalance.sub(currentBalance);
+                const balanceChangeInUsd = ethers.utils.formatEther(balanceChangeInEth) * ethPrice;
 
-                if (balanceChange.gt(THRESHOLD)) {
-                    console.log(`[${getTimeStamp()}] Balance change exceeds threshold. Halting debase process.`);
-                    break;
-                }
+                console.log(`Balance Change for first transaction: ${ethers.utils.formatEther(balanceChangeInEth)} ETH`);
+                console.log(`Equivalent in USD: $${balanceChangeInUsd.toFixed(4)}`);
+
+                maxAddresses = Math.floor(usdThreshold / balanceChangeInUsd);
+                console.log(`Max addresses to debase: ${maxAddresses}`);
                 await new Promise(resolve => setTimeout(resolve, 500));
             }
             else {
