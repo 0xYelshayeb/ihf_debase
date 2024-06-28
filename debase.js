@@ -5,6 +5,9 @@ require('dotenv').config();
 
 const provider = new ethers.providers.JsonRpcProvider(process.env.RPC_URL);
 
+console.log('PRIVATE_KEY1:', process.env.PRIVATE_KEY1 ? 'Loaded' : 'Not Loaded');
+console.log('PRIVATE_KEY2:', process.env.PRIVATE_KEY2 ? 'Loaded' : 'Not Loaded');
+
 const wallet1 = new ethers.Wallet(process.env.PRIVATE_KEY1, provider);
 const wallet2 = new ethers.Wallet(process.env.PRIVATE_KEY2, provider);
 
