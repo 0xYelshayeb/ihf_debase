@@ -138,7 +138,7 @@ const debaseAddresses = async () => {
         }
 
         if (!firstSuccessful) {
-            initialBalance = await getBalance();
+            initialBalance = await getBalance(wallet1);
         }
 
         try {
