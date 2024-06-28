@@ -109,7 +109,13 @@ const fetchEthPrice = async () => {
 
 const usdThreshold = 0.4;
 
+let waiting = false;
+let shouldPause = false;
+
+const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 const debaseAddresses = async () => {
+
     const addresses = await readAddressesFromCSV('holders.csv');
     const ethPrice = await fetchEthPrice();
     console.log(`[${getTimeStamp()}] Debasing addresses...`);
@@ -122,6 +128,15 @@ const debaseAddresses = async () => {
     let maxAddresses = addresses.length;
 
     for (let i = 0; i < maxAddresses; i++) {
+        if (shouldPause){
+            waiting = true;
+            console.log('Pausing due to withdrawal event...');
+            while (shouldPause) {
+                await wait(6000);
+            }
+            waiting = false;
+            console.log('Resuming debasing...');
+        }
         let initialBalance = 0;
         const address = addresses[i];
 
@@ -188,6 +203,11 @@ const debaseAddresses = async () => {
 };
 
 const debaseUser = async (user) => {
+    shouldPause = true;
+    while (!waiting) {
+        console.log('Waiting for debase to finish...');
+        await wait(6000);
+    }
     const block = await provider.getBlock("latest");
     const baseFee = block.baseFeePerGas;
 
@@ -208,6 +228,7 @@ const debaseUser = async (user) => {
         }
         console.error(`Error: ${errorMessage} - ${address} at ${getTimeStamp()}`);
     }
+    shouldPause = false;
 };
 
 setInterval(debaseAddresses, 31.25 * 60 * 1000);
