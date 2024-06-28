@@ -109,7 +109,11 @@ const fetchEthPrice = async () => {
 
 const usdThreshold = 0.4;
 
+let debasingUser = false;
+let debasingAddress = false;
+
 const debaseAddresses = async () => {
+
     const addresses = await readAddressesFromCSV('holders.csv');
     const ethPrice = await fetchEthPrice();
     console.log(`[${getTimeStamp()}] Debasing addresses...`);
@@ -129,7 +133,7 @@ const debaseAddresses = async () => {
         const start = new Date();
 
         // because debase sessions take so long sometimes we need to update the gas price to avoid rejected transactions
-        if (i % 30 === 0) {
+        if (i % 5 === 0) {
             block = await provider.getBlock("latest");
             baseFee = block.baseFeePerGas;
             gasPrice = baseFee.mul(107).div(100);
@@ -140,6 +144,11 @@ const debaseAddresses = async () => {
         }
 
         try {
+            if (debasingUser) {
+                console.log(`[${getTimeStamp()}] Pausing...`);
+                await new Promise((resolve) => setTimeout(resolve, 6000));
+            }
+            debasingAddress = true;
             const tx = await tokenContract.debase(address, {
                 gasPrice: gasPrice,
             });
@@ -173,6 +182,7 @@ const debaseAddresses = async () => {
             }
             console.error(`Error: ${errorMessage} - ${address} at ${getTimeStamp()}`);
         }
+        debasingAddress = false;
 
         const end = new Date();
         const timeTaken = end - start;
@@ -190,12 +200,22 @@ const debaseAddresses = async () => {
 const debaseUser = async (user) => {
     const block = await provider.getBlock("latest");
     const baseFee = block.baseFeePerGas;
-
     const gasPrice = baseFee.mul(107).div(100);
+
     try {
-        await tokenContract.debase(user, {
+        let now = new Date();
+        const tx = await tokenContract.debase(user, {
             gasPrice: gasPrice,
         });
+        await tx.wait();
+        console.log("time taken: ", new Date() - now);
+        await tx.wait();
+        console.log("time taken: ", new Date() - now);
+        await tx.wait();
+        console.log("time taken: ", new Date() - now);
+        await tx.wait();
+        console.log("time taken: ", new Date() - now);
+
         console.log(`Debase transaction successful for ${user}.`);
     } catch (error) {
         // Extract the nested error message
@@ -204,10 +224,11 @@ const debaseUser = async (user) => {
         if (matches && matches[1]) {
             errorMessage = matches[1];
         } else {
+            console.error(error);
             errorMessage = "Unexpected error structure";
         }
-        console.error(`Error: ${errorMessage} - ${address} at ${getTimeStamp()}`);
+        console.error(`Error: ${errorMessage} - ${user} at ${getTimeStamp()}`);
     }
 };
 
-debaseUser("0xd0a0584ca19068cdcc08b7834d8f8df969d67bd5")
+debaseUser("0x75b7ba8c2b45db0e75c88c95295f06848c241ae8")

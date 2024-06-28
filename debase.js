@@ -109,10 +109,8 @@ const fetchEthPrice = async () => {
 
 const usdThreshold = 0.4;
 
-let waiting = false;
-let shouldPause = false;
-
-const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+let addressesTx;
+let userTx;
 
 const debaseAddresses = async () => {
 
@@ -128,15 +126,6 @@ const debaseAddresses = async () => {
     let maxAddresses = addresses.length;
 
     for (let i = 0; i < maxAddresses; i++) {
-        if (shouldPause){
-            waiting = true;
-            console.log('Pausing due to withdrawal event...');
-            while (shouldPause) {
-                await wait(6000);
-            }
-            waiting = false;
-            console.log('Resuming debasing...');
-        }
         let initialBalance = 0;
         const address = addresses[i];
 
@@ -155,16 +144,20 @@ const debaseAddresses = async () => {
         }
 
         try {
-            const tx = await tokenContract.debase(address, {
+            await Promise.race([
+                userTx.wait(),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Operation timed out')), 15000))
+            ]);
+            addressesTx = await tokenContract.debase(address, {
                 gasPrice: gasPrice,
             });
+            await Promise.race([
+                tx.wait(),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Operation timed out')), 15000))
+            ]);
             console.log(`Debase transaction successful for ${address}.`);
             // Ensure the balance change is checked for the first successful transaction
             if (!firstSuccessful) {
-                await Promise.race([
-                    tx.wait(),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('Operation timed out')), 15000))
-                ]);
                 firstSuccessful = true;
                 const currentBalance = await getBalance();
                 balanceChangeInEth = initialBalance.sub(currentBalance);
@@ -188,34 +181,28 @@ const debaseAddresses = async () => {
             }
             console.error(`Error: ${errorMessage} - ${address} at ${getTimeStamp()}`);
         }
-
         const end = new Date();
         const timeTaken = end - start;
         // wait 6 seconds before the next iteration
-        if (timeTaken < 6000) {
-            await new Promise((resolve) => setTimeout(resolve, 6000 - timeTaken));
-        }
-        else {
-            console.error(`Time taken: ${timeTaken}ms`);
-        }
+        console.error(`Time taken: ${timeTaken}ms`);
     }
     console.log(`[${getTimeStamp()}] ${amount} addresses debased.`);
 };
 
 const debaseUser = async (user) => {
-    shouldPause = true;
-    while (!waiting) {
-        console.log('Waiting for debase to finish...');
-        await wait(6000);
-    }
     const block = await provider.getBlock("latest");
     const baseFee = block.baseFeePerGas;
-
     const gasPrice = baseFee.mul(107).div(100);
+
     try {
-        await tokenContract.debase(user, {
+        await Promise.race([
+            addressesTx.wait(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Operation timed out')), 15000))
+        ]);
+        userTx = await tokenContract.debase(user, {
             gasPrice: gasPrice,
         });
+        await userTx.wait();
         console.log(`Debase transaction successful for ${user}.`);
     } catch (error) {
         // Extract the nested error message
@@ -226,9 +213,8 @@ const debaseUser = async (user) => {
         } else {
             errorMessage = "Unexpected error structure";
         }
-        console.error(`Error: ${errorMessage} - ${address} at ${getTimeStamp()}`);
+        console.error(`Error: ${errorMessage} - ${user} at ${getTimeStamp()}`);
     }
-    shouldPause = false;
 };
 
 setInterval(debaseAddresses, 31.25 * 60 * 1000);
