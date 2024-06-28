@@ -8,6 +8,10 @@ const provider = new ethers.providers.JsonRpcProvider(process.env.RPC_URL);
 const wallet1 = new ethers.Wallet(process.env.PRIVATE_KEY1, provider);
 const wallet2 = new ethers.Wallet(process.env.PRIVATE_KEY2, provider);
 
+// print the address of the wallets
+console.log(`Wallet 1 address: ${wallet1.address}`);
+console.log(`Wallet 2 address: ${wallet2.address}`);
+
 const tokenContractAddress = process.env.CONTRACT_ADDRESS;
 const tokenAbi = [
     {
