@@ -125,6 +125,9 @@ const debaseAddresses = async () => {
         let initialBalance = 0;
         const address = addresses[i];
 
+        // make sure each loop iteration takes exactly 5 seconds
+        const start = new Date();
+
         // because debase sessions take so long sometimes we need to update the gas price to avoid rejected transactions
         if (i % 30 === 0) {
             block = await provider.getBlock("latest");
@@ -158,16 +161,17 @@ const debaseAddresses = async () => {
 
                 maxAddresses = Math.min(Math.floor(usdThreshold / balanceChangeInUsd), addresses.length);
                 console.log(`Max addresses to debase: ${maxAddresses}`);
-                await new Promise(resolve => setTimeout(resolve, 3500));
-            }
-            else {
-                // Wait 3.5s
-                await new Promise(resolve => setTimeout(resolve, 3500));
             }
             amount++;
         } catch (error) {
             console.error(`${address} is on cooldown at ${getTimeStamp()}`);
-            await new Promise(resolve => setTimeout(resolve, 4000));
+        }
+        // calculate the time taken
+        const end = new Date();
+        const timeTaken = end - start;
+
+        if (timeTaken < 5000) {
+            await new Promise((resolve) => setTimeout(resolve, Math.min(5000 - timeTaken, 0)));
         }
     }
     console.log(`[${getTimeStamp()}] ${amount} addresses debased.`);
