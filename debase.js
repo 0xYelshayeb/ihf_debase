@@ -166,12 +166,12 @@ const debaseAddresses = async () => {
         } catch (error) {
             console.error(`${address} is on cooldown at ${getTimeStamp()}`);
         }
-        // calculate the time taken
+
         const end = new Date();
         const timeTaken = end - start;
-
+        // wait 5 seconds before the next iteration
         if (timeTaken < 5000) {
-            await new Promise((resolve) => setTimeout(resolve, Math.min(5000 - timeTaken, 0)));
+            await new Promise((resolve) => setTimeout(resolve, 5000 - timeTaken));
         }
     }
     console.log(`[${getTimeStamp()}] ${amount} addresses debased.`);
