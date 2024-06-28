@@ -158,7 +158,7 @@ const debaseAddresses = async () => {
 
                 maxAddresses = Math.min(Math.floor(usdThreshold / balanceChangeInUsd), addresses.length);
                 console.log(`Max addresses to debase: ${maxAddresses}`);
-                await new Promise(resolve => setTimeout(resolve, 500));
+                await new Promise(resolve => setTimeout(resolve, 3500));
             }
             else {
                 // Wait 3.5s
@@ -167,7 +167,7 @@ const debaseAddresses = async () => {
             amount++;
         } catch (error) {
             console.error(`${address} is on cooldown at ${getTimeStamp()}`);
-            await new Promise(resolve => setTimeout(resolve, 3500));
+            await new Promise(resolve => setTimeout(resolve, 4000));
         }
     }
     console.log(`[${getTimeStamp()}] ${amount} addresses debased.`);
