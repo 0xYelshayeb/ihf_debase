@@ -163,7 +163,15 @@ const debaseAddresses = async () => {
             }
             amount++;
         } catch (error) {
-            console.error(`${address} is on cooldown at ${getTimeStamp()}`);
+            // Extract the nested error message
+            let errorMessage = '';
+            const matches = error.message.match(/execution reverted: (.+?)(?="|$)/);
+            if (matches && matches[1]) {
+                errorMessage = matches[1];
+            } else {
+                errorMessage = "Unexpected error structure";
+            }
+            console.error(`Error: ${errorMessage} - ${address} at ${getTimeStamp()}`);
         }
 
         const end = new Date();
@@ -190,7 +198,15 @@ const debaseUser = async (user) => {
         });
         console.log(`Debase transaction successful for ${user}.`);
     } catch (error) {
-        console.error(`${user} is on cooldown at ${getTimeStamp()}`);
+        // Extract the nested error message
+        let errorMessage = '';
+        const matches = error.message.match(/execution reverted: (.+?)(?="|$)/);
+        if (matches && matches[1]) {
+            errorMessage = matches[1];
+        } else {
+            errorMessage = "Unexpected error structure";
+        }
+        console.error(`Error: ${errorMessage} - ${address} at ${getTimeStamp()}`);
     }
 };
 
