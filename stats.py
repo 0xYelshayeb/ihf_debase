@@ -12,10 +12,13 @@ df['CumulativeBalance'] = df['Balance'].cumsum()
 
 # append 0 to the beginning of the cumulative balance
 df['CumulativeBalance'] = df['CumulativeBalance'].shift(1)
-df['CumulativeBalance'].iloc[0] = 0
 
-# Debug: cumulative 300 / last cumulative
-print(df['CumulativeBalance'][300]/df['CumulativeBalance'].iloc[-1])
+# What percentage of tokens (after the first 2 addresses) are held by the first 300 addresses?
+total_tokens = df['CumulativeBalance'].iloc[-1]
+top_300_tokens = df['CumulativeBalance'].iloc[76]
+first_2_tokens = df['CumulativeBalance'].iloc[2]
+percentage = (top_300_tokens-first_2_tokens) / (total_tokens-first_2_tokens) * 100
+print(f'{percentage:.2f}% of tokens are held by the first 300 addresses.')
 
 # Plotting the cumulative balance with enhancements
 plt.figure(figsize=(12, 8))
