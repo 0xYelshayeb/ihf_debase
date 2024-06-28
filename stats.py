@@ -15,7 +15,7 @@ df['CumulativeBalance'] = df['CumulativeBalance'].shift(1)
 
 # What percentage of tokens (after the first 2 addresses) are held by the first 300 addresses?
 total_tokens = df['CumulativeBalance'].iloc[-1]
-top_300_tokens = df['CumulativeBalance'].iloc[76]
+top_300_tokens = df['CumulativeBalance'].iloc[280]
 first_2_tokens = df['CumulativeBalance'].iloc[2]
 percentage = (top_300_tokens-first_2_tokens) / (total_tokens-first_2_tokens) * 100
 print(f'{percentage:.2f}% of tokens are held by the first 300 addresses.')

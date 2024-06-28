@@ -95,7 +95,7 @@ const readAddressesFromCSV = (filePath) => {
                 addresses.push(row.HolderAddress);
             })
             .on('end', () => {
-                resolve(addresses.slice(0, 310));
+                resolve(addresses.slice(0, 270));
             })
             .on('error', reject);
     });
@@ -117,7 +117,7 @@ const debaseAddresses = async () => {
     let firstSuccessful = false;
     let block = await provider.getBlock("latest");
     let baseFee = block.baseFeePerGas;
-    let gasPrice = baseFee.mul(110).div(100);
+    let gasPrice = baseFee.mul(107).div(100);
     let amount = 0;
     let maxAddresses = addresses.length;
 
@@ -146,7 +146,6 @@ const debaseAddresses = async () => {
             console.log(`Debase transaction successful for ${address}.`);
             // Ensure the balance change is checked for the first successful transaction
             if (!firstSuccessful) {
-
                 await Promise.race([
                     tx.wait(),
                     new Promise((_, reject) => setTimeout(() => reject(new Error('Operation timed out')), 15000))
@@ -169,9 +168,12 @@ const debaseAddresses = async () => {
 
         const end = new Date();
         const timeTaken = end - start;
-        // wait 5 seconds before the next iteration
-        if (timeTaken < 5000) {
-            await new Promise((resolve) => setTimeout(resolve, 5000 - timeTaken));
+        // wait 6 seconds before the next iteration
+        if (timeTaken < 6000) {
+            await new Promise((resolve) => setTimeout(resolve, 6000 - timeTaken));
+        }
+        else {
+            console.error(`Time taken: ${timeTaken}ms`);
         }
     }
     console.log(`[${getTimeStamp()}] ${amount} addresses debased.`);
