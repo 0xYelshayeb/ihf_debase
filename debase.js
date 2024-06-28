@@ -4,7 +4,9 @@ const csv = require('csv-parser');
 require('dotenv').config();
 
 const provider = new ethers.providers.JsonRpcProvider(process.env.RPC_URL);
-const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+
+const wallet1 = new ethers.Wallet(process.env.PRIVATE_KEY1, provider);
+const wallet2 = new ethers.Wallet(process.env.PRIVATE_KEY2, provider);
 
 const tokenContractAddress = process.env.CONTRACT_ADDRESS;
 const tokenAbi = [
@@ -42,7 +44,8 @@ const tokenAbi = [
     }
 ];
 
-const tokenContract = new ethers.Contract(tokenContractAddress, tokenAbi, wallet);
+const tokenContract1 = new ethers.Contract(tokenContractAddress, tokenAbi, wallet1);
+const tokenContract2 = new ethers.Contract(tokenContractAddress, tokenAbi, wallet2);
 
 const vaultContractAddress = process.env.VAULT_CONTRACT_ADDRESS;
 const vaultAbi = [
@@ -75,14 +78,12 @@ const vaultAbi = [
 
 const vaultContract = new ethers.Contract(vaultContractAddress, vaultAbi, provider);
 
-const THRESHOLD = ethers.utils.parseEther('0.000003');
-
 const getTimeStamp = () => {
     const now = new Date();
     return `${now.toISOString()}`;
 };
 
-const getBalance = async () => {
+const getBalance = async (wallet) => {
     return await wallet.getBalance();
 };
 
@@ -108,9 +109,6 @@ const fetchEthPrice = async () => {
 };
 
 const usdThreshold = 0.4;
-
-let addressesTx;
-let userTx;
 
 const debaseAddresses = async () => {
 
@@ -144,22 +142,18 @@ const debaseAddresses = async () => {
         }
 
         try {
-            await Promise.race([
-                userTx.wait(),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Operation timed out')), 15000))
-            ]);
-            addressesTx = await tokenContract.debase(address, {
+            const tx = await tokenContract1.debase(address, {
                 gasPrice: gasPrice,
             });
-            await Promise.race([
-                tx.wait(),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Operation timed out')), 15000))
-            ]);
             console.log(`Debase transaction successful for ${address}.`);
             // Ensure the balance change is checked for the first successful transaction
             if (!firstSuccessful) {
+                await Promise.race([
+                    tx.wait(),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Operation timed out')), 15000))
+                ]);
                 firstSuccessful = true;
-                const currentBalance = await getBalance();
+                const currentBalance = await getBalance(wallet1);
                 balanceChangeInEth = initialBalance.sub(currentBalance);
                 const balanceChangeInUsd = ethers.utils.formatEther(balanceChangeInEth) * ethPrice;
 
@@ -184,7 +178,12 @@ const debaseAddresses = async () => {
         const end = new Date();
         const timeTaken = end - start;
         // wait 6 seconds before the next iteration
-        console.error(`Time taken: ${timeTaken}ms`);
+        if (timeTaken < 6000) {
+            await new Promise((resolve) => setTimeout(resolve, 6000 - timeTaken));
+        }
+        else {
+            console.error(`Time taken: ${timeTaken}ms`);
+        }
     }
     console.log(`[${getTimeStamp()}] ${amount} addresses debased.`);
 };
@@ -195,14 +194,9 @@ const debaseUser = async (user) => {
     const gasPrice = baseFee.mul(107).div(100);
 
     try {
-        await Promise.race([
-            addressesTx.wait(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Operation timed out')), 15000))
-        ]);
-        userTx = await tokenContract.debase(user, {
+        const tx = await tokenContract2.debase(user, {
             gasPrice: gasPrice,
         });
-        await userTx.wait();
         console.log(`Debase transaction successful for ${user}.`);
     } catch (error) {
         // Extract the nested error message
