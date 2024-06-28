@@ -171,7 +171,7 @@ const debaseAddresses = async () => {
             } else {
                 errorMessage = "Unexpected error structure";
             }
-            console.error(`${address} is on cooldown at ${getTimeStamp()} - Error: ${errorMessage}`);
+            console.error(`Error: ${errorMessage} - ${address} at ${getTimeStamp()}`);
         }
 
         const end = new Date();
@@ -206,27 +206,8 @@ const debaseUser = async (user) => {
         } else {
             errorMessage = "Unexpected error structure";
         }
-        console.error(`${address} is on cooldown at ${getTimeStamp()} - Error: ${errorMessage}`);
+        console.error(`Error: ${errorMessage} - ${address} at ${getTimeStamp()}`);
     }
 };
 
-setInterval(debaseAddresses, 31.25 * 60 * 1000);
-
-debaseAddresses();
-
-vaultContract.on('Withdraw', (user, amount, tax) => {
-    const amountInEther = ethers.utils.formatEther(amount);
-    const taxInEther = ethers.utils.formatEther(tax);
-    console.log(`[${getTimeStamp()}] Withdraw event detected. User: ${user}, Amount: ${amountInEther} IHF, Tax: ${taxInEther} IHF`);
-    debaseUser(user);
-});
-
-console.log('Listening for Withdraw events...');
-
-process.on('uncaughtException', function (err) {
-    console.error('Uncaught Exception:', err);
-});
-
-process.on('unhandledRejection', function (reason, promise) {
-    console.error('Unhandled Rejection:', reason);
-});
+debaseUser("0xd0a0584ca19068cdcc08b7834d8f8df969d67bd5")
