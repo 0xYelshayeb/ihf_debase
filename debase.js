@@ -161,8 +161,7 @@ const debaseAddresses = async () => {
                 balanceChangeInEth = initialBalance.sub(currentBalance);
                 const balanceChangeInUsd = ethers.utils.formatEther(balanceChangeInEth) * ethPrice;
 
-                console.log(`Balance Change for first transaction: ${ethers.utils.formatEther(balanceChangeInEth)} ETH`);
-                console.log(`Equivalent in USD: $${balanceChangeInUsd.toFixed(4)}`);
+                console.log(`Balance change in USD: $${balanceChangeInUsd.toFixed(4)}`);
 
                 maxAddresses = Math.min(Math.floor(usdThreshold / balanceChangeInUsd), addresses.length);
                 console.log(`Max addresses to debase: ${maxAddresses}`);
