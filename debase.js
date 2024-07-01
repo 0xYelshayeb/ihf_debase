@@ -78,37 +78,6 @@ const tokenAbi = [
 const tokenContract1 = new ethers.Contract(tokenContractAddress, tokenAbi, wallet1);
 const tokenContract2 = new ethers.Contract(tokenContractAddress, tokenAbi, wallet2);
 
-const vaultContractAddress = process.env.VAULT_CONTRACT_ADDRESS;
-const vaultAbi = [
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": true,
-                "internalType": "address",
-                "name": "user",
-                "type": "address"
-            },
-            {
-                "indexed": false,
-                "internalType": "uint256",
-                "name": "amount",
-                "type": "uint256"
-            },
-            {
-                "indexed": false,
-                "internalType": "uint256",
-                "name": "tax",
-                "type": "uint256"
-            }
-        ],
-        "name": "Withdraw",
-        "type": "event"
-    }
-];
-
-const vaultContract = new ethers.Contract(vaultContractAddress, vaultAbi, provider);
-
 let addresses = [];
 let transferAddresses = [];
 
@@ -259,13 +228,6 @@ setInterval(debaseAddresses, 31.25 * 60 * 1000);
 
 debaseAddresses();
 
-vaultContract.on('Withdraw', (user, amount, tax) => {
-    const amountInEther = ethers.utils.formatEther(amount);
-    const taxInEther = ethers.utils.formatEther(tax);
-    console.log(`[${getTimeStamp()}] Withdraw event detected. User: ${user}, Amount: ${amountInEther} IHF, Tax: ${taxInEther} IHF`);
-    debaseUser(user);
-});
-
 const whitelist = [NULL_ADDRESS, '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad', '0x1111111254EEB25477B68fb85Ed929f73A960582']
 
 tokenContract1.on('Transfer', (from, to, value) => {
@@ -286,7 +248,6 @@ tokenContract1.on('Transfer', (from, to, value) => {
 });
 
 console.log('Listening for Transfer events...');
-console.log('Listening for Withdraw events...');
 
 process.on('uncaughtException', function (err) {
     console.error('Uncaught Exception:', err);
