@@ -266,7 +266,7 @@ vaultContract.on('Withdraw', (user, amount, tax) => {
     debaseUser(user);
 });
 
-const whitelist = [NULL_ADDRESS, '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad']
+const whitelist = [NULL_ADDRESS, '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad', '0x1111111254EEB25477B68fb85Ed929f73A960582']
 
 tokenContract1.on('Transfer', (from, to, value) => {
     to = to.toLowerCase();
