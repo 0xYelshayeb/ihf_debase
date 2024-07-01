@@ -124,7 +124,7 @@ const debaseAddresses = async () => {
         addresses = newAddresses;
     }
 
-    const combinedAddresses = newAddresses.concat(transferAddresses);
+    const combinedAddresses = transferAddresses.concat(newAddresses);
     const ethPrice = await fetchEthPrice();
 
     console.log(`[${getTimeStamp()}] Debasing addresses...`);
