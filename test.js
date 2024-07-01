@@ -3,8 +3,16 @@ const fs = require('fs');
 const csv = require('csv-parser');
 require('dotenv').config();
 
+const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
+
 const provider = new ethers.providers.JsonRpcProvider(process.env.RPC_URL);
-const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+
+const wallet1 = new ethers.Wallet(process.env.PRIVATE_KEY1, provider);
+const wallet2 = new ethers.Wallet(process.env.PRIVATE_KEY2, provider);
+
+// print the address of the wallets
+console.log(`Wallet 1 address: ${wallet1.address}`);
+console.log(`Wallet 2 address: ${wallet2.address}`);
 
 const tokenContractAddress = process.env.CONTRACT_ADDRESS;
 const tokenAbi = [
@@ -39,10 +47,36 @@ const tokenAbi = [
         ],
         "stateMutability": "view",
         "type": "function"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "from",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "to",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "value",
+                "type": "uint256"
+            }
+        ],
+        "name": "Transfer",
+        "type": "event"
     }
 ];
 
-const tokenContract = new ethers.Contract(tokenContractAddress, tokenAbi, wallet);
+const tokenContract1 = new ethers.Contract(tokenContractAddress, tokenAbi, wallet1);
+const tokenContract2 = new ethers.Contract(tokenContractAddress, tokenAbi, wallet2);
 
 const vaultContractAddress = process.env.VAULT_CONTRACT_ADDRESS;
 const vaultAbi = [
@@ -75,14 +109,15 @@ const vaultAbi = [
 
 const vaultContract = new ethers.Contract(vaultContractAddress, vaultAbi, provider);
 
-const THRESHOLD = ethers.utils.parseEther('0.000003');
+let addresses = [];
+let transferAddresses = [];
 
 const getTimeStamp = () => {
     const now = new Date();
     return `${now.toISOString()}`;
 };
 
-const getBalance = async () => {
+const getBalance = async (wallet) => {
     return await wallet.getBalance();
 };
 
@@ -109,25 +144,32 @@ const fetchEthPrice = async () => {
 
 const usdThreshold = 0.4;
 
-let debasingUser = false;
-let debasingAddress = false;
-
 const debaseAddresses = async () => {
 
-    const addresses = await readAddressesFromCSV('holders.csv');
+    const newAddresses = await readAddressesFromCSV('holders.csv');
+
+    // If the addresses differ, clear the transferAddresses
+    if (newAddresses.some((address, index) => address !== addresses[index])) {
+        console.log(`[${getTimeStamp()}] Addresses have changed.`);
+        transferAddresses = [];
+    }
+
+    const combinedAddresses = newAddresses.concat(transferAddresses);
     const ethPrice = await fetchEthPrice();
+
     console.log(`[${getTimeStamp()}] Debasing addresses...`);
+
     let balanceChangeInEth = ethers.BigNumber.from(0);
     let firstSuccessful = false;
     let block = await provider.getBlock("latest");
     let baseFee = block.baseFeePerGas;
     let gasPrice = baseFee.mul(107).div(100);
     let amount = 0;
-    let maxAddresses = addresses.length;
+    let maxAddresses = combinedAddresses.length;
 
     for (let i = 0; i < maxAddresses; i++) {
         let initialBalance = 0;
-        const address = addresses[i];
+        const address = combinedAddresses[i];
 
         // make sure each loop iteration takes exactly 5 seconds
         const start = new Date();
@@ -140,16 +182,11 @@ const debaseAddresses = async () => {
         }
 
         if (!firstSuccessful) {
-            initialBalance = await getBalance();
+            initialBalance = await getBalance(wallet1);
         }
 
         try {
-            if (debasingUser) {
-                console.log(`[${getTimeStamp()}] Pausing...`);
-                await new Promise((resolve) => setTimeout(resolve, 6000));
-            }
-            debasingAddress = true;
-            const tx = await tokenContract.debase(address, {
+            const tx = await tokenContract1.debase(address, {
                 gasPrice: gasPrice,
             });
             console.log(`Debase transaction successful for ${address}.`);
@@ -160,14 +197,13 @@ const debaseAddresses = async () => {
                     new Promise((_, reject) => setTimeout(() => reject(new Error('Operation timed out')), 15000))
                 ]);
                 firstSuccessful = true;
-                const currentBalance = await getBalance();
+                const currentBalance = await getBalance(wallet1);
                 balanceChangeInEth = initialBalance.sub(currentBalance);
                 const balanceChangeInUsd = ethers.utils.formatEther(balanceChangeInEth) * ethPrice;
 
-                console.log(`Balance Change for first transaction: ${ethers.utils.formatEther(balanceChangeInEth)} ETH`);
-                console.log(`Equivalent in USD: $${balanceChangeInUsd.toFixed(4)}`);
+                console.log(`Balance change in USD: $${balanceChangeInUsd.toFixed(4)}`);
 
-                maxAddresses = Math.min(Math.floor(usdThreshold / balanceChangeInUsd), addresses.length);
+                maxAddresses = Math.min(Math.floor(usdThreshold / balanceChangeInUsd), combinedAddresses.length);
                 console.log(`Max addresses to debase: ${maxAddresses}`);
             }
             amount++;
@@ -182,8 +218,6 @@ const debaseAddresses = async () => {
             }
             console.error(`Error: ${errorMessage} - ${address} at ${getTimeStamp()}`);
         }
-        debasingAddress = false;
-
         const end = new Date();
         const timeTaken = end - start;
         // wait 6 seconds before the next iteration
@@ -195,6 +229,8 @@ const debaseAddresses = async () => {
         }
     }
     console.log(`[${getTimeStamp()}] ${amount} addresses debased.`);
+
+    addresses = newAddresses;
 };
 
 const debaseUser = async (user) => {
@@ -203,19 +239,9 @@ const debaseUser = async (user) => {
     const gasPrice = baseFee.mul(107).div(100);
 
     try {
-        let now = new Date();
-        const tx = await tokenContract.debase(user, {
+        await tokenContract2.debase(user, {
             gasPrice: gasPrice,
         });
-        await tx.wait();
-        console.log("time taken: ", new Date() - now);
-        await tx.wait();
-        console.log("time taken: ", new Date() - now);
-        await tx.wait();
-        console.log("time taken: ", new Date() - now);
-        await tx.wait();
-        console.log("time taken: ", new Date() - now);
-
         console.log(`Debase transaction successful for ${user}.`);
     } catch (error) {
         // Extract the nested error message
@@ -224,11 +250,32 @@ const debaseUser = async (user) => {
         if (matches && matches[1]) {
             errorMessage = matches[1];
         } else {
-            console.error(error);
             errorMessage = "Unexpected error structure";
         }
         console.error(`Error: ${errorMessage} - ${user} at ${getTimeStamp()}`);
     }
 };
 
-debaseUser("0x75b7ba8c2b45db0e75c88c95295f06848c241ae8")
+tokenContract1.on('Transfer', (from, to, value) => {
+    const valueInEther = ethers.utils.formatEther(value);
+    // if target is not the null address
+    if (to !== NULL_ADDRESS && valueInEther > 0.5) {
+        console.log(`Transfer event detected. From: ${from}, To: ${to}, Value: ${valueInEther} tokens`);
+
+        if (!addresses.includes(to) && !transferAddresses.includes(to)) {
+            console.log(`Adding ${to} to transferAddresses`);
+            transferAddresses.push(to);
+            debaseUser(to);
+        }
+    }
+});
+
+console.log('Listening for Transfer events...');
+
+process.on('uncaughtException', function (err) {
+    console.error('Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', function (reason, promise) {
+    console.error('Unhandled Rejection:', reason);
+});
