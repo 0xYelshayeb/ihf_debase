@@ -228,14 +228,17 @@ setInterval(debaseAddresses, 31.25 * 60 * 1000);
 
 debaseAddresses();
 
-const whitelist = [NULL_ADDRESS, '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad', '0x1111111254EEB25477B68fb85Ed929f73A960582']
+const whitelist = [
+    NULL_ADDRESS,
+    '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad', '0x1111111254EEB25477B68fb85Ed929f73A960582', '0xe37e799d5077682fa0a244d46e5649f71457bd09'
+]
 
-tokenContract1.on('Transfer', (from, to, value) => {
+tokenContract2.on('Transfer', (from, to, value) => {
     to = to.toLowerCase();
     const valueInEther = ethers.utils.formatEther(value);
     // if target is not the null address
     if (!whitelist.includes(to) && valueInEther > 0.4) {
-        console.log(`Transfer event detected. From: ${from}, To: ${to}, Value: ${valueInEther} tokens`);
+        console.log(`Transfer detected. From: ${from}, To: ${to}, Value: ${valueInEther} tokens`);
         if (!addresses.includes(to) && !transferAddresses.includes(to)) {
             // print all addresses that are being tracked
             console.log(`Adding ${to} to transferAddresses`);
