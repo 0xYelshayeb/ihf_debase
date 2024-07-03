@@ -124,7 +124,7 @@ const debaseAddresses = async () => {
         addresses = newAddresses;
     }
 
-    const combinedAddresses = newAddresses.concat(transferAddresses);
+    let combinedAddresses = newAddresses.concat(transferAddresses);
     console.log(`Transfer addresses: ${transferAddresses}`);
     const ethPrice = await fetchEthPrice();
 
@@ -174,7 +174,10 @@ const debaseAddresses = async () => {
 
                 console.log(`Balance change in USD: $${balanceChangeInUsd.toFixed(4)}`);
 
-                maxAddresses = Math.min(Math.floor(usdThreshold / balanceChangeInUsd), newAddresses.length) + transferAddresses.length;
+                maxAddresses = Math.min(Math.floor(usdThreshold / balanceChangeInUsd), newAddresses.length);
+                combinedAddresses = combinedAddresses.slice(0, maxAddresses);
+                combinedAddresses = combinedAddresses.concat(transferAddresses);
+                maxAddresses = combinedAddresses.length;
                 console.log(`Max addresses to debase: ${maxAddresses}`);
             }
             amount++;
