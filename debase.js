@@ -124,7 +124,7 @@ const debaseAddresses = async () => {
         addresses = newAddresses;
     }
 
-    let combinedAddresses = newAddresses.concat(transferAddresses);
+    let combinedAddresses = addresses.concat(transferAddresses);
     console.log(`Transfer addresses: ${transferAddresses}`);
     const ethPrice = await fetchEthPrice();
 
@@ -136,7 +136,7 @@ const debaseAddresses = async () => {
     let baseFee = block.baseFeePerGas;
     let gasPrice = baseFee.mul(107).div(100);
     let amount = 0;
-    let maxAddresses = newAddresses.length;
+    let maxAddresses = addresses.length;
 
     for (let i = 0; i < maxAddresses; i++) {
         let initialBalance = 0;
@@ -234,7 +234,7 @@ debaseAddresses();
 
 const whitelist = [
     NULL_ADDRESS,
-    '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad', '0x1111111254EEB25477B68fb85Ed929f73A960582', '0xe37e799d5077682fa0a244d46e5649f71457bd09'
+    '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad', '0x1111111254EEB25477B68fb85Ed929f73A960582', '0xe37e799d5077682fa0a244d46e5649f71457bd09', '0x111111125421ca6dc452d289314280a0f8842a65'
 ]
 
 tokenContract2.on('Transfer', (from, to, value) => {
