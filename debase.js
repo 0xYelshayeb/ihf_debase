@@ -102,7 +102,7 @@ const readAddressesFromCSV = (filePath) => {
             })
             .on('end', () => {
                 const filteredAddresses = addresses.filter(address => !filterList.includes(address));
-                resolve(filteredAddresses.slice(0, 270));
+                resolve(filteredAddresses.slice(0, 225));
             })
             .on('error', reject);
     });
@@ -198,8 +198,8 @@ const debaseAddresses = async () => {
         const end = new Date();
         const timeTaken = end - start;
         // wait 6 seconds before the next iteration
-        if (timeTaken < 6000) {
-            await new Promise((resolve) => setTimeout(resolve, 6000 - timeTaken));
+        if (timeTaken < 7500) {
+            await new Promise((resolve) => setTimeout(resolve, 7500 - timeTaken));
         }
         else {
             console.error(`Time taken: ${timeTaken}ms`);
