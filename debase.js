@@ -90,6 +90,8 @@ const getBalance = async (wallet) => {
     return await wallet.getBalance();
 };
 
+filterList = ["0x042fef60ad51f48c65e6106f9b950178910a3300", "0x455fd3ae52a8ab80f319a1bf912457aa8296695a", "0x745f0a7f065857670af71fc827e4557c64e679c9", "0x503514046121103d66337a867e23c19be8617b30", "0x4ee2acf64a2c0db6a1da0a4b534b08f036d0da41"];
+
 const readAddressesFromCSV = (filePath) => {
     return new Promise((resolve, reject) => {
         const addresses = [];
@@ -99,7 +101,8 @@ const readAddressesFromCSV = (filePath) => {
                 addresses.push(row.HolderAddress);
             })
             .on('end', () => {
-                resolve(addresses.slice(0, 270));
+                const filteredAddresses = addresses.filter(address => !filterList.includes(address));
+                resolve(filteredAddresses.slice(0, 270));
             })
             .on('error', reject);
     });
