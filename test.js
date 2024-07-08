@@ -138,7 +138,7 @@ const debaseAddresses = async () => {
     let firstSuccessful = false;
     let block = await provider.getBlock("latest");
     let baseFee = block.baseFeePerGas;
-    let gasPrice = baseFee.mul(107).div(100);
+    let gasPrice = baseFee.mul(110).div(100);
     let amount = 0;
     let maxAddresses = addresses.length;
 
@@ -212,10 +212,11 @@ const debaseAddresses = async () => {
 const debaseUser = async (user) => {
     const block = await provider.getBlock("latest");
     const baseFee = block.baseFeePerGas;
-    const gasPrice = baseFee.mul(107).div(100);
+    const gasPrice = baseFee.mul(110).div(100);
 
+    const currentTime = new Date();
     try {
-        await tokenContract2.debase(user, {
+        await tokenContract2.callStatic.debase(user, {
             gasPrice: gasPrice,
         });
         console.log(`Debase transaction successful for ${user}.`);
@@ -230,40 +231,8 @@ const debaseUser = async (user) => {
         }
         console.error(`Error: ${errorMessage} - ${user} at ${getTimeStamp()}`);
     }
+    const endTime = new Date();
+    console.log(`Time taken: ${endTime - currentTime}ms`);
 };
 
-setInterval(debaseAddresses, 30.1 * 60 * 1000);
-
-debaseAddresses();
-
-const whitelist = [
-    NULL_ADDRESS,
-    '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad', '0x1111111254EEB25477B68fb85Ed929f73A960582', '0xe37e799d5077682fa0a244d46e5649f71457bd09', '0x111111125421ca6dc452d289314280a0f8842a65'
-]
-
-tokenContract2.on('Transfer', (from, to, value) => {
-    to = to.toLowerCase();
-    const valueInEther = ethers.utils.formatEther(value);
-    // if target is not the null address
-    if (!whitelist.includes(to) && valueInEther > 0.4) {
-        console.log(`Transfer detected. From: ${from}, To: ${to}, Value: ${valueInEther} tokens`);
-        if (!addresses.includes(to) && !transferAddresses.includes(to)) {
-            // print all addresses that are being tracked
-            console.log(`Adding ${to} to transferAddresses`);
-            transferAddresses.push(to);
-            debaseUser(to);
-        } else {
-            console.log(`User ${to} already tracked.`);
-        }
-    }
-});
-
-console.log('Listening for Transfer events...');
-
-process.on('uncaughtException', function (err) {
-    console.error('Uncaught Exception:', err);
-});
-
-process.on('unhandledRejection', function (reason, promise) {
-    console.error('Unhandled Rejection:', reason);
-});
+debaseUser("0xde1765eb87cbaf807458c7ccb100134de1b57396")
