@@ -78,37 +78,6 @@ const tokenAbi = [
 const tokenContract1 = new ethers.Contract(tokenContractAddress, tokenAbi, wallet1);
 const tokenContract2 = new ethers.Contract(tokenContractAddress, tokenAbi, wallet2);
 
-const vaultContractAddress = process.env.VAULT_CONTRACT_ADDRESS;
-const vaultAbi = [
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": true,
-                "internalType": "address",
-                "name": "user",
-                "type": "address"
-            },
-            {
-                "indexed": false,
-                "internalType": "uint256",
-                "name": "amount",
-                "type": "uint256"
-            },
-            {
-                "indexed": false,
-                "internalType": "uint256",
-                "name": "tax",
-                "type": "uint256"
-            }
-        ],
-        "name": "Withdraw",
-        "type": "event"
-    }
-];
-
-const vaultContract = new ethers.Contract(vaultContractAddress, vaultAbi, provider);
-
 let addresses = [];
 let transferAddresses = [];
 
@@ -121,6 +90,8 @@ const getBalance = async (wallet) => {
     return await wallet.getBalance();
 };
 
+filterList = ["0x042fef60ad51f48c65e6106f9b950178910a3300", "0x455fd3ae52a8ab80f319a1bf912457aa8296695a", "0x745f0a7f065857670af71fc827e4557c64e679c9", "0x503514046121103d66337a867e23c19be8617b30", "0x4ee2acf64a2c0db6a1da0a4b534b08f036d0da41"];
+
 const readAddressesFromCSV = (filePath) => {
     return new Promise((resolve, reject) => {
         const addresses = [];
@@ -130,7 +101,8 @@ const readAddressesFromCSV = (filePath) => {
                 addresses.push(row.HolderAddress);
             })
             .on('end', () => {
-                resolve(addresses.slice(0, 270));
+                const filteredAddresses = addresses.filter(address => !filterList.includes(address));
+                resolve(filteredAddresses.slice(0, 270));
             })
             .on('error', reject);
     });
@@ -147,14 +119,17 @@ const usdThreshold = 0.4;
 const debaseAddresses = async () => {
 
     const newAddresses = await readAddressesFromCSV('holders.csv');
+    console.log(newAddresses);
 
     // If the addresses differ, clear the transferAddresses
     if (newAddresses.some((address, index) => address !== addresses[index])) {
         console.log(`[${getTimeStamp()}] Addresses have changed.`);
         transferAddresses = [];
+        addresses = newAddresses;
     }
 
-    const combinedAddresses = newAddresses.concat(transferAddresses);
+    let combinedAddresses = addresses.concat(transferAddresses);
+    console.log(`Transfer addresses: ${transferAddresses}`);
     const ethPrice = await fetchEthPrice();
 
     console.log(`[${getTimeStamp()}] Debasing addresses...`);
@@ -165,7 +140,7 @@ const debaseAddresses = async () => {
     let baseFee = block.baseFeePerGas;
     let gasPrice = baseFee.mul(107).div(100);
     let amount = 0;
-    let maxAddresses = combinedAddresses.length;
+    let maxAddresses = addresses.length;
 
     for (let i = 0; i < maxAddresses; i++) {
         let initialBalance = 0;
@@ -203,7 +178,10 @@ const debaseAddresses = async () => {
 
                 console.log(`Balance change in USD: $${balanceChangeInUsd.toFixed(4)}`);
 
-                maxAddresses = Math.min(Math.floor(usdThreshold / balanceChangeInUsd), combinedAddresses.length);
+                maxAddresses = Math.min(Math.floor(usdThreshold / balanceChangeInUsd), newAddresses.length);
+                combinedAddresses = combinedAddresses.slice(0, maxAddresses);
+                combinedAddresses = combinedAddresses.concat(transferAddresses);
+                maxAddresses = combinedAddresses.length;
                 console.log(`Max addresses to debase: ${maxAddresses}`);
             }
             amount++;
@@ -229,8 +207,6 @@ const debaseAddresses = async () => {
         }
     }
     console.log(`[${getTimeStamp()}] ${amount} addresses debased.`);
-
-    addresses = newAddresses;
 };
 
 const debaseUser = async (user) => {
@@ -256,16 +232,28 @@ const debaseUser = async (user) => {
     }
 };
 
-tokenContract1.on('Transfer', (from, to, value) => {
+setInterval(debaseAddresses, 30.1 * 60 * 1000);
+
+debaseAddresses();
+
+const whitelist = [
+    NULL_ADDRESS,
+    '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad', '0x1111111254EEB25477B68fb85Ed929f73A960582', '0xe37e799d5077682fa0a244d46e5649f71457bd09', '0x111111125421ca6dc452d289314280a0f8842a65'
+]
+
+tokenContract2.on('Transfer', (from, to, value) => {
+    to = to.toLowerCase();
     const valueInEther = ethers.utils.formatEther(value);
     // if target is not the null address
-    if (to !== NULL_ADDRESS && valueInEther > 0.5) {
-        console.log(`Transfer event detected. From: ${from}, To: ${to}, Value: ${valueInEther} tokens`);
-
+    if (!whitelist.includes(to) && valueInEther > 0.4) {
+        console.log(`Transfer detected. From: ${from}, To: ${to}, Value: ${valueInEther} tokens`);
         if (!addresses.includes(to) && !transferAddresses.includes(to)) {
+            // print all addresses that are being tracked
             console.log(`Adding ${to} to transferAddresses`);
             transferAddresses.push(to);
             debaseUser(to);
+        } else {
+            console.log(`User ${to} already tracked.`);
         }
     }
 });
