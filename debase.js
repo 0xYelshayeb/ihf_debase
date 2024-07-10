@@ -198,8 +198,8 @@ const debaseAddresses = async () => {
         const end = new Date();
         const timeTaken = end - start;
         // wait 6 seconds before the next iteration
-        if (timeTaken < 7500) {
-            await new Promise((resolve) => setTimeout(resolve, 7500 - timeTaken));
+        if (timeTaken < 7000) {
+            await new Promise((resolve) => setTimeout(resolve, 7000 - timeTaken));
         }
         else {
             console.error(`Time taken: ${timeTaken}ms`);
